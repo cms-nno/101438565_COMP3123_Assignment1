@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/emp/employees"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "first_name": "John",
+      "last_name": "Smith",
+      "email": "john.smith@example.com",
+      "position": "Software Developer",
+      "salary": 65000,
+      "date_of_joining": "2025-09-01",
+      "department": "IT"
+    }
+order: 2000

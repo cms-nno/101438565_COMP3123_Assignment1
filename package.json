@@ -10,16 +10,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cms-nno/101438565_COMP32123_Assignment1.git"
+    "url": "git+https://github.com/cms-nno/101438565_COMP3123_Assignment1.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/cms-nno/101438565_COMP32123_Assignment1/issues"
+    "url": "https://github.com/cms-nno/101438565_COMP3123_Assignment1/issues"
   },
-  "homepage": "https://github.com/cms-nno/101438565_COMP32123_Assignment1#readme",
+  "homepage": "https://github.com/cms-nno/101438565_COMP3123_Assignment1#readme",
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "dotenv": "^18.0.8",

@@ -1,0 +1,12 @@
+$kind: collection
+description: API collection for user authentication and employee management.
+variables:
+  baseUrl: http://localhost:3000
+  token: ""
+  eid: ""
+auth:
+  - id: cdd29aed-8472-4995-8745-82c0c0b583c9
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{token}}"

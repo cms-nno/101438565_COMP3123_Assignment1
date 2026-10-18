@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/emp/employees?eid={{eid}}"
+method: DELETE
+queryParams:
+  eid: "{{eid}}"
+order: 5000

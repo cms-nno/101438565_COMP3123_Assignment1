@@ -1,0 +1,28 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/user/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "YOUR_EXISTING_EMAIL",
+      "password": "YOUR_EXISTING_PASSWORD"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      let data = {};
+      try { data = pm.response.json(); } catch (e) {}
+      const token = data.token || data.accessToken || data.access_token || data.jwt || (data.data && (data.data.token || data.data.accessToken || data.data.access_token || data.data.jwt));
+      if (token) {
+        pm.collectionVariables.set('token', token);
+        console.log('JWT token saved to collection variables.');
+      } else {
+        console.log('Token not found automatically. Inspect the login response and save its JWT token manually.');
+      }
+    language: text/javascript
+order: 2000

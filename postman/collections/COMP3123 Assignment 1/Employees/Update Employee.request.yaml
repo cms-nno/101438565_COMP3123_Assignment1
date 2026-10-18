@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/emp/employees/{{eid}}"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "position": "Senior Software Developer",
+      "salary": 75000
+    }
+order: 4000
