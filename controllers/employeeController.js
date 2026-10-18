@@ -12,6 +12,30 @@ const ALLOWED_EMPLOYEE_FIELDS = [
   "department",
 ];
 
+// Centralized employee-controller error handling.
+const sendEmployeeError = (res, error, operation) => {
+  if (error.name === "ValidationError") {
+    return res.status(400).json({
+      message: "Validation failed",
+      errors: Object.values(error.errors).map(
+        (item) => item.message
+      ),
+    });
+  }
+
+  if (error.name === "CastError") {
+    return res.status(400).json({
+      message: "Invalid field value",
+    });
+  }
+
+  console.error(`${operation} error:`, error.message);
+
+  return res.status(500).json({
+    message: "Internal server error",
+  });
+};
+
 // GET /api/v1/emp/employees
 // Return only employees owned by the authenticated user.
 const listEmployees = async (req, res) => {
@@ -22,15 +46,12 @@ const listEmployees = async (req, res) => {
 
     return res.status(200).json(employees);
   } catch (error) {
-    console.error("List employees error:", error.message);
-    return res.status(500).json({
-      message: "Internal server error",
-    });
+    return sendEmployeeError(res, error, "List employees");
   }
 };
 
 // POST /api/v1/emp/employees
-// Always assign ownership from the authenticated user's identity.
+// Assign ownership using the authenticated user's identity.
 const createEmployee = async (req, res) => {
   try {
     const employeeData = {};
@@ -52,19 +73,7 @@ const createEmployee = async (req, res) => {
 
     return res.status(201).json(employee);
   } catch (error) {
-    if (
-      error.name === "ValidationError" ||
-      error.name === "CastError"
-    ) {
-      return res.status(400).json({
-        message: error.message,
-      });
-    }
-
-    console.error("Create employee error:", error.message);
-    return res.status(500).json({
-      message: "Internal server error",
-    });
+    return sendEmployeeError(res, error, "Create employee");
   }
 };
 
@@ -93,10 +102,7 @@ const getEmployee = async (req, res) => {
 
     return res.status(200).json(employee);
   } catch (error) {
-    console.error("Get employee error:", error.message);
-    return res.status(500).json({
-      message: "Internal server error",
-    });
+    return sendEmployeeError(res, error, "Get employee");
   }
 };
 
@@ -150,19 +156,7 @@ const updateEmployee = async (req, res) => {
 
     return res.status(200).json(employee);
   } catch (error) {
-    if (
-      error.name === "ValidationError" ||
-      error.name === "CastError"
-    ) {
-      return res.status(400).json({
-        message: error.message,
-      });
-    }
-
-    console.error("Update employee error:", error.message);
-    return res.status(500).json({
-      message: "Internal server error",
-    });
+    return sendEmployeeError(res, error, "Update employee");
   }
 };
 
@@ -172,7 +166,10 @@ const deleteEmployee = async (req, res) => {
   try {
     const { eid } = req.query;
 
-    if (!eid || !mongoose.isValidObjectId(eid)) {
+    if (
+      typeof eid !== "string" ||
+      !mongoose.isValidObjectId(eid)
+    ) {
       return res.status(400).json({
         message: "A valid employee ID is required",
       });
@@ -191,10 +188,7 @@ const deleteEmployee = async (req, res) => {
 
     return res.status(204).send();
   } catch (error) {
-    console.error("Delete employee error:", error.message);
-    return res.status(500).json({
-      message: "Internal server error",
-    });
+    return sendEmployeeError(res, error, "Delete employee");
   }
 };
 

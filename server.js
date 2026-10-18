@@ -25,7 +25,6 @@ const apiLimiter = rateLimit({
   },
 });
 
-// Apply rate limiting to all API endpoints.
 app.use("/api", apiLimiter);
 
 // API routes
@@ -35,6 +34,49 @@ app.use("/api/v1/emp", employeeRoutes);
 app.get("/", (req, res) => {
   res.status(200).json({
     message: "COMP3123 Assignment 1 API is running",
+  });
+});
+
+// Handle unsupported routes.
+app.use((req, res) => {
+  return res.status(404).json({
+    message: "Route not found",
+  });
+});
+
+// Centralized error handler.
+// Express identifies error middleware by its four parameters.
+app.use((err, req, res, next) => {
+  console.error("Request error:", {
+    method: req.method,
+    path: req.path,
+    message: err.message,
+  });
+
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  // Malformed JSON submitted to express.json().
+  if (
+    err instanceof SyntaxError &&
+    err.status === 400 &&
+    Object.prototype.hasOwnProperty.call(err, "body")
+  ) {
+    return res.status(400).json({
+      message: "Invalid JSON request body",
+    });
+  }
+
+  // Request body exceeds the configured body-size limit.
+  if (err.type === "entity.too.large") {
+    return res.status(413).json({
+      message: "Request body is too large",
+    });
+  }
+
+  return res.status(500).json({
+    message: "Internal server error",
   });
 });
 

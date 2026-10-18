@@ -2,18 +2,51 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 
+const handleUserError = (res, error, operation) => {
+  // Duplicate username or email.
+  if (error.code === 11000) {
+    return res.status(409).json({
+      message: "Username or email already exists",
+    });
+  }
+
+  // Mongoose validation errors.
+  if (error.name === "ValidationError") {
+    return res.status(400).json({
+      message: "Validation failed",
+      errors: Object.values(error.errors).map(
+        (item) => item.message
+      ),
+    });
+  }
+
+  // Invalid MongoDB field values.
+  if (error.name === "CastError") {
+    return res.status(400).json({
+      message: "Invalid field value",
+    });
+  }
+
+  // Log details on the server, not in the API response.
+  console.error(`${operation} error:`, error.message);
+
+  return res.status(500).json({
+    message: "Internal server error",
+  });
+};
+
 const signup = async (req, res) => {
   try {
     const { username, email, password } = req.body || {};
 
-    // Validate required fields and their types.
     if (
       typeof username !== "string" ||
       typeof email !== "string" ||
       typeof password !== "string"
     ) {
       return res.status(400).json({
-        message: "Username, email, and password must be provided as strings",
+        message:
+          "Username, email, and password must be provided as strings",
       });
     }
 
@@ -26,7 +59,10 @@ const signup = async (req, res) => {
       });
     }
 
-    if (normalizedUsername.length < 3 || normalizedUsername.length > 30) {
+    if (
+      normalizedUsername.length < 3 ||
+      normalizedUsername.length > 30
+    ) {
       return res.status(400).json({
         message: "Username must be between 3 and 30 characters",
       });
@@ -88,27 +124,7 @@ const signup = async (req, res) => {
       },
     });
   } catch (error) {
-    if (error.code === 11000) {
-      return res.status(409).json({
-        message: "Username or email already exists",
-      });
-    }
-
-    if (error.name === "ValidationError" || error.name === "CastError") {
-      return res.status(400).json({
-        message: "Validation failed",
-        errors:
-          error.name === "ValidationError"
-            ? Object.values(error.errors).map((err) => err.message)
-            : [error.message],
-      });
-    }
-
-    console.error("Signup error:", error.message);
-
-    return res.status(500).json({
-      message: "Internal server error",
-    });
+    return handleUserError(res, error, "Signup");
   }
 };
 
@@ -116,7 +132,6 @@ const login = async (req, res) => {
   try {
     const { username, email, password } = req.body || {};
 
-    // Accept username OR email, together with a password.
     const hasUsername =
       typeof username === "string" && username.trim().length > 0;
 
@@ -129,10 +144,13 @@ const login = async (req, res) => {
       });
     }
 
-    const identifier = hasUsername ? username.trim() : email?.trim();
+    const identifier = hasUsername
+      ? username.trim()
+      : hasEmail
+        ? email.trim()
+        : null;
 
     if (
-      typeof identifier !== "string" ||
       !identifier ||
       typeof password !== "string" ||
       !password
@@ -184,11 +202,7 @@ const login = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Login error:", error.message);
-
-    return res.status(500).json({
-      message: "Internal server error",
-    });
+    return handleUserError(res, error, "Login");
   }
 };
 
