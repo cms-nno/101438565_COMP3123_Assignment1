@@ -1,6 +1,7 @@
 
 const mongoose = require("mongoose");
 const Employee = require("../models/Employee");
+const logger = require("../config/logger");
 
 const ALLOWED_EMPLOYEE_FIELDS = [
   "first_name",
@@ -15,6 +16,11 @@ const ALLOWED_EMPLOYEE_FIELDS = [
 // Centralized employee-controller error handling.
 const sendEmployeeError = (res, error, operation) => {
   if (error.name === "ValidationError") {
+    logger.warn("Employee validation failed", {
+      operation,
+      status: 400,
+    });
+
     return res.status(400).json({
       message: "Validation failed",
       errors: Object.values(error.errors).map(
@@ -24,12 +30,21 @@ const sendEmployeeError = (res, error, operation) => {
   }
 
   if (error.name === "CastError") {
+    logger.warn("Invalid employee field value", {
+      operation,
+      status: 400,
+    });
+
     return res.status(400).json({
       message: "Invalid field value",
     });
   }
 
-  console.error(`${operation} error:`, error.message);
+  logger.error("Employee operation failed", {
+    operation,
+    error: error.message,
+    status: 500,
+  });
 
   return res.status(500).json({
     message: "Internal server error",
@@ -42,6 +57,12 @@ const listEmployees = async (req, res) => {
   try {
     const employees = await Employee.find({
       user: req.user.id,
+    });
+
+    logger.info("Employee list retrieved", {
+      userId: req.user.id,
+      count: employees.length,
+      status: 200,
     });
 
     return res.status(200).json(employees);
@@ -71,6 +92,12 @@ const createEmployee = async (req, res) => {
 
     await employee.save();
 
+    logger.info("Employee created", {
+      userId: req.user.id,
+      employeeId: employee._id.toString(),
+      status: 201,
+    });
+
     return res.status(201).json(employee);
   } catch (error) {
     return sendEmployeeError(res, error, "Create employee");
@@ -78,12 +105,17 @@ const createEmployee = async (req, res) => {
 };
 
 // GET /api/v1/emp/employees/:eid
-// Retrieve an employee only if the authenticated user owns it.
 const getEmployee = async (req, res) => {
   try {
     const { eid } = req.params;
 
     if (!mongoose.isValidObjectId(eid)) {
+      logger.warn("Invalid employee ID", {
+        operation: "Get employee",
+        userId: req.user.id,
+        status: 400,
+      });
+
       return res.status(400).json({
         message: "Invalid employee ID",
       });
@@ -95,10 +127,23 @@ const getEmployee = async (req, res) => {
     });
 
     if (!employee) {
+      logger.warn("Employee not found for authenticated user", {
+        operation: "Get employee",
+        userId: req.user.id,
+        employeeId: eid,
+        status: 404,
+      });
+
       return res.status(404).json({
         message: "Employee not found",
       });
     }
+
+    logger.info("Employee retrieved", {
+      userId: req.user.id,
+      employeeId: employee._id.toString(),
+      status: 200,
+    });
 
     return res.status(200).json(employee);
   } catch (error) {
@@ -107,12 +152,17 @@ const getEmployee = async (req, res) => {
 };
 
 // PUT /api/v1/emp/employees/:eid
-// Update permitted fields only, and only for an owned employee.
 const updateEmployee = async (req, res) => {
   try {
     const { eid } = req.params;
 
     if (!mongoose.isValidObjectId(eid)) {
+      logger.warn("Invalid employee ID", {
+        operation: "Update employee",
+        userId: req.user.id,
+        status: 400,
+      });
+
       return res.status(400).json({
         message: "Invalid employee ID",
       });
@@ -129,6 +179,13 @@ const updateEmployee = async (req, res) => {
     }
 
     if (Object.keys(updates).length === 0) {
+      logger.warn("Employee update validation failed", {
+        userId: req.user.id,
+        employeeId: eid,
+        reason: "No permitted fields supplied",
+        status: 400,
+      });
+
       return res.status(400).json({
         message: "No valid employee fields provided for update",
       });
@@ -149,10 +206,23 @@ const updateEmployee = async (req, res) => {
     );
 
     if (!employee) {
+      logger.warn("Employee not found for authenticated user", {
+        operation: "Update employee",
+        userId: req.user.id,
+        employeeId: eid,
+        status: 404,
+      });
+
       return res.status(404).json({
         message: "Employee not found",
       });
     }
+
+    logger.info("Employee updated", {
+      userId: req.user.id,
+      employeeId: employee._id.toString(),
+      status: 200,
+    });
 
     return res.status(200).json(employee);
   } catch (error) {
@@ -161,7 +231,6 @@ const updateEmployee = async (req, res) => {
 };
 
 // DELETE /api/v1/emp/employees?eid=xxx
-// Delete only if the authenticated user owns the employee.
 const deleteEmployee = async (req, res) => {
   try {
     const { eid } = req.query;
@@ -170,6 +239,12 @@ const deleteEmployee = async (req, res) => {
       typeof eid !== "string" ||
       !mongoose.isValidObjectId(eid)
     ) {
+      logger.warn("Invalid employee ID", {
+        operation: "Delete employee",
+        userId: req.user.id,
+        status: 400,
+      });
+
       return res.status(400).json({
         message: "A valid employee ID is required",
       });
@@ -181,10 +256,23 @@ const deleteEmployee = async (req, res) => {
     });
 
     if (!employee) {
+      logger.warn("Employee not found for authenticated user", {
+        operation: "Delete employee",
+        userId: req.user.id,
+        employeeId: eid,
+        status: 404,
+      });
+
       return res.status(404).json({
         message: "Employee not found",
       });
     }
+
+    logger.info("Employee deleted", {
+      userId: req.user.id,
+      employeeId: eid,
+      status: 204,
+    });
 
     return res.status(204).send();
   } catch (error) {

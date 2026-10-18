@@ -59,3 +59,24 @@ Example response:
   "message": "API is running",
   "timestamp": "2026-10-18T12:00:00.000Z"
 }
+
+# Local Logging
+The application uses Winston for local application logging and Morgan for HTTP request logging.
+
+Log files
+logs/application.log — records server startup, HTTP requests, successful operations, validation failures, authentication failures, and warnings.
+logs/error.log — records application errors.
+logs/sample.log — contains illustrative log entries for demonstration.
+Logged events
+Server startup
+HTTP method, request path, response status, and request duration
+Successful user registration and login
+Failed login attempts
+Missing, invalid, and expired authentication tokens
+Employee creation, retrieval, updates, and deletion
+Validation failures, missing employees, unsupported routes, and application errors
+Sensitive information
+Passwords, JWT secrets, full authentication tokens, and database credentials are not intentionally written to logs. Generated log files are excluded from version control; a sanitized sample is included for demonstration.
+
+Verification
+Logging was tested using Postman by sending successful requests and requests that returned errors, then checking the resulting local log files.

@@ -4,7 +4,10 @@ require("dotenv").config();
 const express = require("express");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const morgan = require("morgan");
+
 const connectDB = require("./config/db");
+const logger = require("./config/logger");
 
 const userRoutes = require("./routes/userRoutes");
 const employeeRoutes = require("./routes/employeeRoutes");
@@ -12,6 +15,16 @@ const employeeRoutes = require("./routes/employeeRoutes");
 const app = express();
 
 app.use(helmet());
+
+// Log HTTP requests, including method, path, status, and response time.
+app.use(
+  morgan("combined", {
+    stream: {
+      write: (message) => logger.info(message.trim()),
+    },
+  })
+);
+
 app.use(express.json());
 
 // Health check endpoint
@@ -48,6 +61,12 @@ app.get("/", (req, res) => {
 
 // Handle unsupported routes.
 app.use((req, res) => {
+  logger.warn("Route not found", {
+    method: req.method,
+    path: req.path,
+    status: 404,
+  });
+
   return res.status(404).json({
     message: "Route not found",
   });
@@ -55,10 +74,11 @@ app.use((req, res) => {
 
 // Centralized error handler.
 app.use((err, req, res, next) => {
-  console.error("Request error:", {
+  logger.error("Request error", {
     method: req.method,
     path: req.path,
     message: err.message,
+    status: err.status || 500,
   });
 
   if (res.headersSent) {
@@ -95,9 +115,14 @@ const startServer = async () => {
     await connectDB();
 
     app.listen(PORT, () => {
+      logger.info("Server started", { port: PORT });
       console.log(`Server running on port ${PORT}`);
     });
   } catch (error) {
+    logger.error("Server startup failed", {
+      message: error.message,
+    });
+
     console.error("Server startup failed:", error.message);
     process.exitCode = 1;
   }
