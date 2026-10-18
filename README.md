@@ -2,7 +2,7 @@
 
 
 
-Rate Limiting
+# Rate Limiting
 The application uses express-rate-limit to protect the API against excessive requests and help reduce brute-force attacks.
 
 Configuration
@@ -17,7 +17,7 @@ An initial request with invalid credentials returned HTTP 401 Unauthorized.
 After the configured request limit was exceeded, the server returned HTTP 429 Too Many Requests.
 These results confirmed that the API rate limiter was operating as expected during testing.
 
-Error Handling
+# Error Handling
 The API returns JSON responses for errors and uses appropriate HTTP status codes.
 
 400 Bad Request: Invalid input, validation failures, malformed JSON, or invalid employee IDs.
@@ -32,7 +32,7 @@ Error responses avoid exposing passwords, JWT secrets, database credentials, and
 
 The application also prevents startup when the MongoDB connection fails.
 
-HTTP Status Codes
+#HTTP Status Codes
 200 OK	The request succeeded.	Login, retrieving employees, updating an employee
 201 Created	A new resource was created.	User signup or employee creation
 204 No Content	The operation succeeded and returns no response body.	Employee deletion
