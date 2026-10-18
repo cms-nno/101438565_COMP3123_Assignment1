@@ -32,7 +32,7 @@ Error responses avoid exposing passwords, JWT secrets, database credentials, and
 
 The application also prevents startup when the MongoDB connection fails.
 
-#HTTP Status Codes
+# HTTP Status Codes
 200 OK	The request succeeded.	Login, retrieving employees, updating an employee
 201 Created	A new resource was created.	User signup or employee creation
 204 No Content	The operation succeeded and returns no response body.	Employee deletion
