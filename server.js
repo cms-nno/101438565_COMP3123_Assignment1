@@ -1,4 +1,3 @@
-
 require("dotenv").config();
 
 const express = require("express");
@@ -49,10 +48,28 @@ const apiLimiter = rateLimit({
 
 app.use("/api", apiLimiter);
 
+// Connect to MongoDB before handling API requests.
+// This supports Vercel serverless deployments.
+app.use("/api", async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    logger.error("MongoDB connection failed", {
+      message: error.message,
+    });
+
+    return res.status(503).json({
+      message: "Database temporarily unavailable",
+    });
+  }
+});
+
 // API routes
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/emp", employeeRoutes);
 
+// Root endpoint
 app.get("/", (req, res) => {
   res.status(200).json({
     message: "COMP3123 Assignment 1 API is running",
@@ -128,6 +145,8 @@ const startServer = async () => {
   }
 };
 
+// Start a local server only when running this file directly.
+// Vercel imports the Express app instead.
 if (require.main === module) {
   startServer();
 }
