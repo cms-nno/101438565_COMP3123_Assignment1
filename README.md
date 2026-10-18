@@ -43,8 +43,6 @@ The application also prevents startup when the MongoDB connection fails.
 409 Conflict	The request conflicts with existing data.	Duplicate username or email during signup
 429 Too Many Requests	The client exceeded the configured rate limit.	More than the allowed number of requests within the rate-limit window
 500 Internal Server Error	An unexpected server-side error occurred.	Unexpected application or database operation failure 
-<<<<<<< HEAD
-=======
 
 # Health Check Endpoint
 The API provides a health-check endpoint to verify that the server is running and responding to requests.
@@ -61,7 +59,3 @@ Example response:
   "message": "API is running",
   "timestamp": "2026-10-18T12:00:00.000Z"
 }
-<<<<<<< HEAD
->>>>>>> 77d28ee (health check endpoint and documentation)
-=======
->>>>>>> 77b50a7 (update README Documentation)
