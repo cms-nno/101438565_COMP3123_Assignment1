@@ -61,4 +61,7 @@ Example response:
   "message": "API is running",
   "timestamp": "2026-10-18T12:00:00.000Z"
 }
+<<<<<<< HEAD
 >>>>>>> 77d28ee (health check endpoint and documentation)
+=======
+>>>>>>> 77b50a7 (update README Documentation)
