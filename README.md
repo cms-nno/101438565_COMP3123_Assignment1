@@ -64,9 +64,9 @@ Example response:
 The application uses Winston for local application logging and Morgan for HTTP request logging.
 
 Log files
-logs/application.log — records server startup, HTTP requests, successful operations, validation failures, authentication failures, and warnings.
-logs/error.log — records application errors.
-logs/sample.log — contains illustrative log entries for demonstration.
+logs/application.log  records server startup, HTTP requests, successful operations, validation failures, authentication failures, and warnings.
+logs/error.log  records application errors.
+logs/sample.log  contains illustrative log entries for demonstration.
 Logged events
 Server startup
 HTTP method, request path, response status, and request duration
