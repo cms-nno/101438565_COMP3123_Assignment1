@@ -14,6 +14,15 @@ const app = express();
 app.use(helmet());
 app.use(express.json());
 
+// Health check endpoint
+app.get("/health", (req, res) => {
+  return res.status(200).json({
+    status: "OK",
+    message: "API is running",
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Rate limiting: maximum 100 requests per 15 minutes per IP.
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -45,7 +54,6 @@ app.use((req, res) => {
 });
 
 // Centralized error handler.
-// Express identifies error middleware by its four parameters.
 app.use((err, req, res, next) => {
   console.error("Request error:", {
     method: req.method,
