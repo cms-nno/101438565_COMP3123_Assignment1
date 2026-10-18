@@ -1,35 +1,28 @@
 const winston = require("winston");
 const path = require("path");
 
-const logDirectory = path.join(__dirname, "..", "logs");
+const isVercel = process.env.VERCEL === "1";
 
-const logger = winston.createLogger({
-  level: "info",
+const transports = [];
 
-  format: winston.format.combine(
-    winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-    winston.format.errors({ stack: true }),
-    winston.format.json()
-  ),
+// Vercel: write logs to the console so they appear in Runtime Logs.
+if (isVercel) {
+  transports.push(
+    new winston.transports.Console()
+  );
+} else {
+  // Local development: save logs to files.
+  const logDirectory = path.join(__dirname, "..", "logs");
 
-  transports: [
-    // Save all informational messages, warnings, and errors.
+  transports.push(
     new winston.transports.File({
       filename: path.join(logDirectory, "application.log"),
       level: "info",
     }),
-
-    // Save errors separately for easier troubleshooting.
     new winston.transports.File({
       filename: path.join(logDirectory, "error.log"),
       level: "error",
     }),
-  ],
-});
-
-// Also print logs to the terminal during development.
-if (process.env.NODE_ENV !== "production") {
-  logger.add(
     new winston.transports.Console({
       format: winston.format.combine(
         winston.format.colorize(),
@@ -38,5 +31,17 @@ if (process.env.NODE_ENV !== "production") {
     })
   );
 }
+
+const logger = winston.createLogger({
+  level: process.env.LOG_LEVEL || "info",
+  format: winston.format.combine(
+    winston.format.timestamp({
+      format: "YYYY-MM-DD HH:mm:ss",
+    }),
+    winston.format.errors({ stack: true }),
+    winston.format.json()
+  ),
+  transports,
+});
 
 module.exports = logger;
