@@ -1,7 +1,9 @@
+
 require("dotenv").config();
 
 const express = require("express");
 const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 const connectDB = require("./config/db");
 
 const userRoutes = require("./routes/userRoutes");
@@ -11,6 +13,22 @@ const app = express();
 
 app.use(helmet());
 app.use(express.json());
+
+// Rate limiting: maximum 100 requests per 15 minutes per IP.
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 100,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: {
+    message: "Too many requests. Please try again later.",
+  },
+});
+
+// Apply rate limiting to all API endpoints.
+app.use("/api", apiLimiter);
+
+// API routes
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/emp", employeeRoutes);
 
