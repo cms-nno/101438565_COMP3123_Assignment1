@@ -1,3 +1,4 @@
+
 const mongoose = require("mongoose");
 const User = require("./User");
 
@@ -9,6 +10,7 @@ const employeeSchema = new mongoose.Schema(
       type: String,
       required: [true, "First name is required"],
       trim: true,
+      minlength: [1, "First name cannot be empty"],
       maxlength: [50, "First name cannot exceed 50 characters"],
     },
 
@@ -16,6 +18,7 @@ const employeeSchema = new mongoose.Schema(
       type: String,
       required: [true, "Last name is required"],
       trim: true,
+      minlength: [1, "Last name cannot be empty"],
       maxlength: [50, "Last name cannot exceed 50 characters"],
     },
 
@@ -24,8 +27,10 @@ const employeeSchema = new mongoose.Schema(
       required: [true, "Email is required"],
       lowercase: true,
       trim: true,
+      maxlength: [254, "Email cannot exceed 254 characters"],
       validate: {
-        validator: (email) => emailRegex.test(email),
+        validator: (email) =>
+          typeof email === "string" && emailRegex.test(email),
         message: "Please provide a valid email address",
       },
     },
@@ -34,6 +39,8 @@ const employeeSchema = new mongoose.Schema(
       type: String,
       required: [true, "Position is required"],
       trim: true,
+      minlength: [1, "Position cannot be empty"],
+      maxlength: [100, "Position cannot exceed 100 characters"],
     },
 
     salary: {
@@ -41,8 +48,9 @@ const employeeSchema = new mongoose.Schema(
       required: [true, "Salary is required"],
       min: [0, "Salary cannot be negative"],
       validate: {
-        validator: Number.isFinite,
-        message: "Salary must be a valid number",
+        validator: (salary) =>
+          typeof salary === "number" && Number.isFinite(salary),
+        message: "Salary must be a valid finite number",
       },
     },
 
@@ -50,7 +58,8 @@ const employeeSchema = new mongoose.Schema(
       type: Date,
       required: [true, "Date of joining is required"],
       validate: {
-        validator: (date) => !Number.isNaN(date.getTime()),
+        validator: (date) =>
+          date instanceof Date && !Number.isNaN(date.getTime()),
         message: "Please provide a valid joining date",
       },
     },
@@ -59,12 +68,18 @@ const employeeSchema = new mongoose.Schema(
       type: String,
       required: [true, "Department is required"],
       trim: true,
+      minlength: [1, "Department cannot be empty"],
+      maxlength: [100, "Department cannot exceed 100 characters"],
     },
 
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: [true, "Employee owner is required"],
+      validate: {
+        validator: (id) => mongoose.isValidObjectId(id),
+        message: "Employee owner must be a valid user ID",
+      },
     },
   },
   {
@@ -72,16 +87,19 @@ const employeeSchema = new mongoose.Schema(
       createdAt: "created_at",
       updatedAt: "updated_at",
     },
+    strict: "throw",
   }
 );
 
-// Verify that the employee owner exists in MongoDB.
+// Verify that the referenced owner exists.
 employeeSchema.pre("validate", async function () {
   if (!this.user || !mongoose.isValidObjectId(this.user)) {
     return;
   }
 
-  const ownerExists = await User.exists({ _id: this.user });
+  const ownerExists = await User.exists({
+    _id: this.user,
+  });
 
   if (!ownerExists) {
     this.invalidate("user", "Employee owner does not exist");

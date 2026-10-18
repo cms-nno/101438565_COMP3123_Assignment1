@@ -1,18 +1,60 @@
+
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 
 const signup = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password } = req.body || {};
 
-    if (!username || !email || !password) {
+    // Validate required fields and their types.
+    if (
+      typeof username !== "string" ||
+      typeof email !== "string" ||
+      typeof password !== "string"
+    ) {
       return res.status(400).json({
-        message: "Username, email, and password are required",
+        message: "Username, email, and password must be provided as strings",
       });
     }
 
     const normalizedUsername = username.trim();
     const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedUsername || !normalizedEmail || !password.trim()) {
+      return res.status(400).json({
+        message: "Username, email, and password are required",
+      });
+    }
+
+    if (normalizedUsername.length < 3 || normalizedUsername.length > 30) {
+      return res.status(400).json({
+        message: "Username must be between 3 and 30 characters",
+      });
+    }
+
+    if (normalizedEmail.length > 254) {
+      return res.status(400).json({
+        message: "Email cannot exceed 254 characters",
+      });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return res.status(400).json({
+        message: "A valid email is required",
+      });
+    }
+
+    if (password.length < 8 || password.length > 72) {
+      return res.status(400).json({
+        message: "Password must be between 8 and 72 characters",
+      });
+    }
+
+    if (!/^[a-zA-Z0-9_.-]+$/.test(normalizedUsername)) {
+      return res.status(400).json({
+        message: "Username contains invalid characters",
+      });
+    }
 
     const existingUser = await User.findOne({
       $or: [
@@ -52,10 +94,13 @@ const signup = async (req, res) => {
       });
     }
 
-    if (error.name === "ValidationError") {
+    if (error.name === "ValidationError" || error.name === "CastError") {
       return res.status(400).json({
         message: "Validation failed",
-        errors: Object.values(error.errors).map((err) => err.message),
+        errors:
+          error.name === "ValidationError"
+            ? Object.values(error.errors).map((err) => err.message)
+            : [error.message],
       });
     }
 
@@ -69,19 +114,37 @@ const signup = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password } = req.body || {};
 
-    // Accept either username or email.
-    const identifier = username || email;
+    // Accept username OR email, together with a password.
+    const hasUsername =
+      typeof username === "string" && username.trim().length > 0;
+
+    const hasEmail =
+      typeof email === "string" && email.trim().length > 0;
+
+    if (hasUsername && hasEmail) {
+      return res.status(400).json({
+        message: "Provide either username or email, not both",
+      });
+    }
+
+    const identifier = hasUsername ? username.trim() : email?.trim();
 
     if (
       typeof identifier !== "string" ||
-      !identifier.trim() ||
+      !identifier ||
       typeof password !== "string" ||
       !password
     ) {
       return res.status(400).json({
         message: "Username/email and password are required",
+      });
+    }
+
+    if (identifier.length > 254 || password.length > 72) {
+      return res.status(400).json({
+        message: "Login input exceeds the permitted length",
       });
     }
 
@@ -93,11 +156,10 @@ const login = async (req, res) => {
       });
     }
 
-    const query = identifier.includes("@")
-      ? { email: identifier.trim().toLowerCase() }
-      : { username: identifier.trim() };
+    const query = hasEmail
+      ? { email: identifier.toLowerCase() }
+      : { username: identifier };
 
-    // Password is excluded by default, so explicitly select it for comparison.
     const user = await User.findOne(query).select("+password");
 
     if (!user || !(await user.comparePassword(password))) {
