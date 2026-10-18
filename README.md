@@ -31,3 +31,15 @@ The API returns JSON responses for errors and uses appropriate HTTP status codes
 Error responses avoid exposing passwords, JWT secrets, database credentials, and stack traces. Unexpected errors are logged on the server, while clients receive generic error messages.
 
 The application also prevents startup when the MongoDB connection fails.
+
+HTTP Status Codes
+200 OK	The request succeeded.	Login, retrieving employees, updating an employee
+201 Created	A new resource was created.	User signup or employee creation
+204 No Content	The operation succeeded and returns no response body.	Employee deletion
+400 Bad Request	The request contains invalid input.	Missing fields, malformed JSON, invalid employee ID
+401 Unauthorized	Authentication is missing or invalid.	Missing, invalid, or expired JWT; invalid login credentials
+403 Forbidden	The authenticated user is not permitted to perform an operation.	An authenticated user attempting an operation restricted to administrators, if such an authorization rule is implemented
+404 Not Found	The requested resource or route could not be found.	Unsupported route or employee that does not exist or belongs to another user
+409 Conflict	The request conflicts with existing data.	Duplicate username or email during signup
+429 Too Many Requests	The client exceeded the configured rate limit.	More than the allowed number of requests within the rate-limit window
+500 Internal Server Error	An unexpected server-side error occurred.	Unexpected application or database operation failure 
